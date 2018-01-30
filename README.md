@@ -28,6 +28,10 @@ notifies Model to &#39;add item&#39;.
 
 The **next** function executes the middleware function succeeding the current middleware function.
 
+**Database Model** determines the logical structure of a database. In MongoDB context, Model is a constructor function (based on Schema from which it was compiled). Model handles all document creation and retrieval.
+
+**Documents** are instances of a Model. They can be saved and retrieved from a database.
+
 ## Dependencies
 
 ### Express.js
@@ -121,11 +125,61 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 ```
 
+### Database Modeling: MongoDB & Mongoose
+
 We connect our MongoDB database hosted on mLab:
 
 ```JS
 mongoose.connect('mongodb://test:test@ds117868.mlab.com:17868/todo');
 ```
+The central object of Mongoose is Schema. Let's create an instance of this object and define how the data in our schema will be organized. We store this in the variable __todoSchema__.
+
+```JS
+let todoSchema = new mongoose.Schema({
+	item: String
+})
+```
+
+Now we compile our schema into a Model and store our Model in the variable __Todo__. The first argument is the **singular name of the collection the model is for**. Mongoose automatically looks for the plural version of the model name (e.g. __Todos__).
+
+__Todo__ is our constructor for creating Documents. Each document will have 1 property __item__ of type String as declared in our schema.
+
+```JS
+let Todo = mongoose.model('Todo', todoSchema);
+```
+New documents can be submitted to the database using the .save() method. This will be used when handling POST requests.
+
+```JS
+let newTodo = Todo(req.body).save(function(err, data) {
+	if (err) throw err;
+	res.json(data);
+	// Explain res.json and the argument
+})
+```
+
+Database can be queried using the .find() method. This will be used when handling GET requests.
+
+```JS
+Todo.find({}, function(err, data) {
+	if (err) throw (err);
+	res.render('todo', {todos: data});
+	// Explain render request and the above arguments
+});
+```
+
+Documents can be removed from the database using the .remove() method. This will be used when handling DELETE requests.
+
+```JS
+Todo.find({item: req.params.item.replace(/\-/g, " ")}).remove(function(err, data) {
+	if (err) throw (err);
+	res.json(data);
+	// Explain res.json and the argument
+	// Explain the RegEx above
+});
+```
+
+
+### Main Module
 
 Three URL methods are defined here – GET, POST and DELETE which are wrapped in a single function and exported for use in _app.js_.
 
